@@ -1,0 +1,37 @@
+{% extends 'base.html' %} {% block content %}
+<h1 class="my-5">Запросы</h1>
+<div class="row cols-auto">
+    {% for request in requests %}
+    <div class="col-6 d-flex">
+        <div class="card mb-4">
+            <div class="card-body">
+                <p class="card-text">Параметры URL:</p>
+                <ul>
+                    {% for key, value in request.params.items() %}
+                    <li>{{ key }}: {{ value }}</li>
+                    {% endfor %}
+                </ul>
+                <p class="card-text">Заголовки:</p>
+                <ul>
+                    {% for key, value in request.headers.items() %}
+                    <li>{{ key }}: {{ value }}</li>
+                    {% endfor %}
+                </ul>
+                <p class="card-text">Cookie:</p>
+                <ul>
+                    {% for key, value in request.cookie.items() %}
+                    <li>{{ key }}: {{ value }}</li>
+                    {% endfor %}
+                </ul>
+                <p class="card-text">Параметры формы:</p>
+                <ul>
+                    {% for key, value in request.form_params.items() %}
+                    <li>{{ key }}: {{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
