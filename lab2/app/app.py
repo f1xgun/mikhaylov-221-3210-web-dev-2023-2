@@ -1,8 +1,5 @@
 import re
 from flask import Flask, render_template, request
-from faker import Faker
-
-fake = Faker()
 
 app = Flask(__name__)
 application = app
