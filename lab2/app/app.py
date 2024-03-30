@@ -23,6 +23,9 @@ def check_number(number: str) -> str:
     print(formatted_number)
     return ""
 
+@app.rooute('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/form', methods=["GET", "POST"])
 def form():
