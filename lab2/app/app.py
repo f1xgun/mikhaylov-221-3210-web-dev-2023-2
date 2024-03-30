@@ -23,7 +23,7 @@ def check_number(number: str) -> str:
     print(formatted_number)
     return ""
 
-@app.rooute('/')
+@app.route('/')
 def index():
     return render_template('index.html')
 
