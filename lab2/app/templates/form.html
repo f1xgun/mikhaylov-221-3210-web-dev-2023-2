@@ -14,6 +14,10 @@
                     name="phone_number" />
                 {% if error %}
                 <div class="invalid-feedback">{{ error }}</div>
+                {% endif %} {% if number %}
+                <div class="success-feedback">
+                    Результат форматирования: {{ number }}
+                </div>
                 {% endif %}
             </div>
             <button type="submit" class="btn btn-primary">Проверить</button>
