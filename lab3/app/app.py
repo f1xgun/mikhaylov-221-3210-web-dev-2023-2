@@ -16,7 +16,7 @@ class User(UserMixin):
         self.login = login
 
 def get_user_list():
-    return [{"user_id": "1", "login": "user", "password": "qwerty"}]
+    return [{"user_id": "1", "login": "user", "password": "qwerty"}, {"user_id": "2", "login": "admin", "password": "admin"},]
 
 @login_manager.user_loader
 def load_user(user_id):

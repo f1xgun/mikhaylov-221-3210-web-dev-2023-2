@@ -1,0 +1,11 @@
+{% extends 'base.html' %} {% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="my-5">Операция с куки</h1>
+        <p>
+            {% if cookie_exists %} Удалили {% else %} Добавили {% endif %}
+            "Something cookie"
+        </p>
+    </div>
+</div>
+{% endblock %}

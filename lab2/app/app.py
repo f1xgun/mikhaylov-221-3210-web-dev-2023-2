@@ -1,5 +1,5 @@
 import re
-from flask import Flask, render_template, request
+from flask import Flask, make_response, render_template, request
 
 app = Flask(__name__)
 application = app
@@ -7,10 +7,9 @@ application = app
 requests_data = []    
 
 def check_number(number: str) -> {str, str}:
-    number = re.sub(r'[-\(\)\s.]', '', number)
+    number = re.sub(r'[-\(\)\s.+]', '', number)
 
     digits_count = sum(map(lambda x: x.isdigit(), number))
-    number = number.replace("+", "") # В задании указано, что убираем "+" как доп символ, поэтому убираем все, а не только в начале
     if not(digits_count == 10 or digits_count == 11 and (number[0] == "7" or number[0] == "8")):
         return "Недопустимый ввод. Неверное количество цифр.", ""
    
@@ -49,3 +48,20 @@ def log_request():
     }
     requests_data.append(requestData)
     return
+
+@app.route('/set_or_delete_cookie')
+def set_or_delete_cookie():
+    log_request()
+    cookie_name = 'Something cookie'
+    cookie_value = request.cookies.get(cookie_name)
+
+    content = render_template('cookie.html', cookie_exists=(cookie_value is not None))
+
+    resp = make_response(content)
+
+    if cookie_value is None:
+        resp.set_cookie(cookie_name, 'cookie_value')
+    else:
+        resp.delete_cookie(cookie_name)
+
+    return resp

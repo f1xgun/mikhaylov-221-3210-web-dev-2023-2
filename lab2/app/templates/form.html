@@ -11,11 +11,12 @@
                     placeholder="Введите номер телефона"
                     id="number"
                     class="form-control {% if error %}is-invalid{% endif %}"
-                    name="phone_number" />
+                    name="phone_number"
+                    value="{{ request.form.phone_number }}" />
                 {% if error %}
                 <div class="invalid-feedback">{{ error }}</div>
                 {% endif %} {% if number %}
-                <div class="success-feedback">
+                <div class="valid-feedback">
                     Результат форматирования: {{ number }}
                 </div>
                 {% endif %}
