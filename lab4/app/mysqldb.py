@@ -1,7 +1,7 @@
 from flask import g
 import mysql.connector
 
-class DBConnnector:
+class DBConnector:
     def __init__(self, app):
         self.app = app
         app.teardown_appcontext(self.close_connection)
