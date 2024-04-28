@@ -29,7 +29,7 @@
         id="last_name"
         class="form-control {% if errors.last_name %}is-invalid{% endif %}"
         name="last_name"
-        value="{% if request.form.last_name %}{{request.form.last_name}}{% elif user.last_name %}{{ user.last_name }}{% endif %}" />
+        value="{% if request.form %}{{request.form.last_name}}{% elif user.last_name %}{{ user.last_name }}{% endif %}" />
     {% if errors.last_name %}
     <div class="invalid-feedback">{{ errors.last_name }}</div>
     {% endif %}
@@ -40,7 +40,7 @@
         id="first_name"
         class="form-control {% if errors.first_name %}is-invalid{% endif %}"
         name="first_name"
-        value="{% if request.form.first_name %}{{request.form.first_name}}{% elif user.first_name %}{{ user.first_name }}{% endif %}" />
+        value="{% if request.form %}{{request.form.first_name}}{% elif user.first_name %}{{ user.first_name }}{% endif %}" />
     {% if errors.first_name %}
     <div class="invalid-feedback">{{ errors.first_name }}</div>
     {% endif %}
@@ -51,37 +51,23 @@
         id="middle_name"
         class="form-control"
         name="middle_name"
-        value="{% if request.form.middle_name %}{{request.form.middle_name}}{% elif user.middle_name %}{{ user.middle_name }}{% endif %}" />
+        value="{% if request.form %}{{request.form.middle_name}}{% elif user.middle_name %}{{ user.middle_name }}{% endif %}" />
     <label for="middle_name" class="form-label">Роль</label>
     <select
         placeholder="Выберите роль"
         id="role"
         class="form-select mb-2"
-        name="role">
-        <option
-            value=""
-            {%
-            if
-            request.form.role_id==""
-            and
-            user.role_id==""
-            %}selected{% endif %}>
-            Выберите роль
-        </option>
-        {% for role in roles %}
-        <option
-            value="{{ role.id }}"
-            {%
-            if
-            request.form.role_id=="role.id"
-            or
-            request.form.role_id==""
-            and
-            user.role_id=="role.id"
-            %}selected{%endif%}>
-            {{ role.name }}
-        </option>
-        {% endfor %}
+        name="role_id">
+        {% if (request.form.role_id or "")=="" and (user.role_id or "")=="" %}
+        <option value="" selected>Выберите роль</option>
+        {% else %}
+        <option value="">Выберите роль</option>
+        {% endif %} {% for role in roles %} {% if (request.form.role_id or
+        "")==role.id|string or not request.form and user.role_id==role.id %}
+        <option value="{{ role.id }}" selected>{{ role.name }}</option>
+        {% else %}
+        <option value="{{ role.id }}">{{ role.name }}</option>
+        {% endif %} {% endfor %}
     </select>
 
     <button type="submit" class="btn btn-primary">Сохранить</button>

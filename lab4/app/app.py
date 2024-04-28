@@ -106,14 +106,14 @@ def create_user():
     errors = {}
 
     if request.method == "GET":
-        return render_template("create_user.html", roles=get_roles(), errors=errors)
+        return render_template("create_user.html", user=None, roles=get_roles(), errors=errors)
     
     login = request.form.get("login", "")
     password = request.form.get("password", "")
     last_name = request.form.get("last_name", "")
     first_name = request.form.get('first_name', "")
     middle_name = request.form.get('middle_name', "")
-    role_id = request.form.get('role')
+    role_id = request.form.get('role_id')
 
 
     if login == "":
@@ -163,7 +163,7 @@ def create_user():
         return redirect(url_for('users_list'))
     except Exception as e:
         flash(f"Ошибка! {e}", 'warning')
-        return render_template("create_user.html", roles=get_roles(), errors=errors)
+        return render_template("create_user.html", user=None, roles=get_roles(), errors=errors)
         
 def validate_password(password):
     if len(password) < 8:
@@ -189,7 +189,7 @@ def user_info(user_id):
 
 def get_user(user_id):
     query = '''
-    SELECT users.id, login, last_name, first_name, middle_name, roles.name as role_name
+    SELECT users.id, login, last_name, first_name, middle_name, users.role_id as role_id, roles.name as role_name
     FROM users 
     LEFT JOIN roles ON users.role_id = roles.id
     WHERE users.id=%s
@@ -214,7 +214,7 @@ def edit_user(user_id):
     last_name = request.form.get("last_name", "")
     first_name = request.form.get('first_name', "")
     middle_name = request.form.get('middle_name', "")
-    role_id = request.form.get('role')
+    role_id = request.form.get('role_id')
     
     if last_name == "":
         errors["last_name"] = "Поле не может быть пустым"
@@ -227,15 +227,14 @@ def edit_user(user_id):
 
     query = '''
     UPDATE users 
-    SET last_name=%s, first_name=%s {middle_name_placeholder}{middle_name_value} {role_id_placeholder}{role_id_value} 
+    SET last_name=%s, first_name=%s, role_id={role_id_value} {middle_name_placeholder}{middle_name_value}  
     WHERE id=%s
     '''
 
     placeholders = {
         'middle_name_placeholder': ', middle_name=' if middle_name else '',
-        'role_id_placeholder': ', role_id=' if role_id else '',
         'middle_name_value': '%s' if middle_name else '',
-        'role_id_value': '%s' if role_id else '',
+        'role_id_value': '%s' if role_id else 'NULL',
     }
 
     query = query.format(**placeholders)
