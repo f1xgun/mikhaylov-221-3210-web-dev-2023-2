@@ -155,7 +155,7 @@ def export_pages_report_in_csv():
     for record in records:
         cw.writerow([str(item) for item in record])
     output = make_response(si.getvalue().encode('utf-8'))
-    output.headers["Content-Disposition"] = "attachment; filename=report.csv"
+    output.headers["Content-Disposition"] = "attachment; filename=pages_report.csv"
     output.headers["Content-type"] = "text/csv; charset=utf-8"
     return output
 
@@ -235,7 +235,7 @@ def export_users_report_in_csv():
     for record in records:
         cw.writerow([str(item) for item in record])
     output = make_response(si.getvalue().encode('utf-8'))
-    output.headers["Content-Disposition"] = "attachment; filename=report.csv"
+    output.headers["Content-Disposition"] = "attachment; filename=users_report.csv"
     output.headers["Content-type"] = "text/csv; charset=utf-8"
     return output    
 
