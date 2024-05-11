@@ -151,7 +151,7 @@ def test_process_list(input_data, expected):
 
 @pytest.mark.parametrize("input_data, expected", test_data['process_list'])
 def test_process_list_gen(input_data, expected):
-    assert process_list_gen(input_data) == expected
+    assert [num for num in process_list_gen(input_data)] == expected
 
 
 @pytest.mark.parametrize("input_data, expected", test_data['my_sum'])

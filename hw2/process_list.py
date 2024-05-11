@@ -12,7 +12,8 @@ def process_list(arr: list[int]) -> list[int]:
 
 
 def process_list_gen(arr: list[int]) -> list[int]:
-    return [i ** 2 if i % 2 == 0 else i ** 3 for i in arr]
+    for i in arr:
+        yield i ** 2 if i % 2 == 0 else i ** 3
 
 
 if __name__ == '__main__':
@@ -26,5 +27,5 @@ if __name__ == '__main__':
     print(
         f"Example time: {format(end_time - start_time, '.4f')} sec\n"
         f"Gen time: {format(end_time_gen - start_time_gen, '.4f')} sec")
-    # Example time: 0.2762 sec
-    # Gen time: 0.2614 sec
+    # Example time: 0.4945 sec
+    # Gen time: 0.00 sec (так как не используем значения из генератора никак)

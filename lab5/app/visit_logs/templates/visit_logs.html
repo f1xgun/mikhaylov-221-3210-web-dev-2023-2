@@ -1,0 +1,52 @@
+{% extends 'base.html' %} {% block content %} {% if title %}
+<h1 class="text-center">{{ title }}</h1>
+{% endif %} {% if cols_name and records %}
+<table class="table">
+    <thead>
+        <tr>
+            {% for col in cols_name %}
+            <th scope="col">{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            {% for field in record %}
+            <th>{{ field }}</th>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% if page %}
+<nav class="center">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not has_prev_page %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for_prev }}">Previous</a>
+        </li>
+        {% if has_prev_page and url_for_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for_prev }}">{{ page - 1 }}</a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+            <a class="page-link" href="#">{{ page }}</a>
+        </li>
+        {% if has_next_page and url_for_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for_next }}">{{ page + 1 }}</a>
+        </li>
+        {% endif %}
+        <li class="page-item {% if not has_next_page %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for_next }}">Next</a>
+        </li>
+    </ul>
+</nav>
+{% endif %} {% if buttons %}
+<div class="actions text-center">
+    {% for button in buttons %}
+    <a class="btn btn-primary" href="{{button.url}}">{{ button.text }}</a>
+    {% endfor %}
+</div>
+{% endif %} {% endif %} {% endblock %}
