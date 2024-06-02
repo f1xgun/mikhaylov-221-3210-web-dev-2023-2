@@ -5,7 +5,7 @@ from flask_login import current_user
 
 def check_rights(required_role, check_same_user=False):
     def decorator(f):
-        @wraps(f)
+        # @wraps(f)
         def decorated_function(*args, **kwargs):
             user_id = kwargs.get('user_id', None)
 

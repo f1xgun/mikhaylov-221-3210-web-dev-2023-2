@@ -10,5 +10,3 @@ DB_NAME=os.environ.get('DB_NAME')
 from dotenv import load_dotenv
 
 load_dotenv()
-
-os.getenv

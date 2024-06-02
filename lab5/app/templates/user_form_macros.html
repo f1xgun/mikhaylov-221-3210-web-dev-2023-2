@@ -68,12 +68,14 @@
         id="role"
         class="form-select mb-2"
         name="role_id">
-        {% if (request.form.role_id or "")=="" and (user.role_id or "")=="" %}
+        {% if (request.form.role_id or "")=="" and (user and user.role_id or
+        "")=="" %}
         <option value="" selected>Выберите роль</option>
         {% else %}
         <option value="">Выберите роль</option>
         {% endif %} {% for role in roles %} {% if (request.form.role_id or
-        "")==role.id|string or not request.form and user.role_id==role.id %}
+        "")==role.id|string or not request.form and user and
+        user.role_id==role.id %}
         <option value="{{ role.id }}" selected>{{ role.name }}</option>
         {% else %}
         <option value="{{ role.id }}">{{ role.name }}</option>

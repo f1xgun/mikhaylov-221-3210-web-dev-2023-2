@@ -3,6 +3,7 @@ from flask import Flask, render_template, session, request, redirect, url_for, f
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 
 from mysqldb import DBConnector
+import mysql.connector
 
 app = Flask(__name__)
 application = app
@@ -92,13 +93,17 @@ def get_roles():
     SELECT id, name FROM roles 
     '''
 
-    with db_connector.connect().cursor(named_tuple=True) as cursor:
-
-        cursor.execute(query)
-        
-        roles = cursor.fetchall()
-
-    return roles
+    try:
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
+            cursor.execute(query)
+            roles = cursor.fetchall()
+        return roles
+    except mysql.connector.Error as e:
+        flash(f"Database error: {e}", 'warning')
+        return []
+    except Exception as e:
+        flash(f"An error occurred: {e}", 'warning')
+        return []
 
 @app.route("/create_user", methods=["GET", "POST"])
 @login_required
@@ -115,19 +120,7 @@ def create_user():
     middle_name = request.form.get('middle_name', "")
     role_id = request.form.get('role_id')
 
-
-    if login == "":
-        errors["login"] = "Поле не может быть пустым"
-    
-    password_validate_error = validate_password(password)
-    if password_validate_error != "":
-        errors["password"] = password_validate_error
-    
-    if last_name == "":
-        errors["last_name"] = "Поле не может быть пустым"
-    
-    if first_name == "":
-        errors["first_name"] = "Поле не может быть пустым"
+    errors = validate_user_data(login, password, last_name, first_name)
 
     if errors:
         return render_template("create_user.html", roles=get_roles(), errors=errors)
@@ -154,11 +147,10 @@ def create_user():
         parameters.append(role_id)
 
     try:
-        with db_connector.connect() as con:
-            cursor = con.cursor(named_tuple=True)
-            cursor.execute(query, tuple(parameters))
-            cursor.close()
-            con.commit()
+        cursor = db_connector.connect().cursor(named_tuple=True)
+        cursor.execute(query, tuple(parameters))
+        cursor.close()
+        db_connector.connect().commit()
         flash('Пользователь успешно создан', 'success')
         return redirect(url_for('users_list'))
     except Exception as e:
@@ -195,12 +187,17 @@ def get_user(user_id):
     WHERE users.id=%s
     '''
 
-    with db_connector.connect().cursor(named_tuple=True) as cursor:
-
-        cursor.execute(query, (user_id,))
-        
-        user = cursor.fetchone()
-    return user
+    try:
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
+            cursor.execute(query, (user_id,))
+            user = cursor.fetchone()
+        return user
+    except mysql.connector.Error as e:
+        flash(f"Database error: {e}", 'warning')
+        return None
+    except Exception as e:
+        flash(f"An error occurred: {e}", 'warning')
+        return None
 
 @app.route('/users/<int:user_id>/edit_user', methods=["GET", "POST"])
 @login_required
@@ -215,12 +212,7 @@ def edit_user(user_id):
     first_name = request.form.get('first_name', "")
     middle_name = request.form.get('middle_name', "")
     role_id = request.form.get('role_id')
-    
-    if last_name == "":
-        errors["last_name"] = "Поле не может быть пустым"
-    
-    if first_name == "":
-        errors["first_name"] = "Поле не может быть пустым"
+    errors = validate_user_data(login=None, password=None, last_name=last_name, first_name=first_name)
 
     if errors:
         return render_template("edit_user.html", user=user, roles=roles, errors=errors)
@@ -240,23 +232,26 @@ def edit_user(user_id):
     query = query.format(**placeholders)
 
     parameters = [last_name, first_name]
-    if middle_name:
-        parameters.append(middle_name)
-
     if role_id:
         parameters.append(role_id)
+
+    if middle_name:
+        parameters.append(middle_name)
     
     parameters.append(user_id)
 
     try:
-        with db_connector.connect() as con:
-            cursor = con.cursor(named_tuple=True)
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
             cursor.execute(query, tuple(parameters))
-            cursor.close()
-            con.commit()
+            db_connector.connect().commit()
         flash('Пользователь успешно обновлен', 'success')
         return redirect(url_for('users_list'))
+    except mysql.connector.errors.OperationalError as oe:
+        db_connector.connect().rollback()
+        flash(f"Операционная ошибка! {oe}", 'warning')
+        return render_template("edit_user.html", user=user, roles=get_roles(), errors=errors)
     except Exception as e:
+        db_connector.connect().rollback()
         flash(f"Ошибка! {e}", 'warning')
         return render_template("edit_user.html", user=user, roles=get_roles(), errors=errors)
     
@@ -272,7 +267,6 @@ def change_password():
     new_password2 = request.form.get("new_password2", "")
 
     query_check_password = "SELECT IF(SHA2(%s, 256)=password_hash, 1, 0) as valid FROM users WHERE id=%s"
-
 
     try:
         with db_connector.connect().cursor(named_tuple=True) as cursor:
@@ -304,11 +298,10 @@ def change_password():
     change_password_query = "UPDATE users SET password_hash=SHA2(%s, 256) WHERE id=%s"
 
     try:
-        with db_connector.connect() as con:
-            cursor = con.cursor(named_tuple=True)
-            cursor.execute(change_password_query, (new_password, current_user.id))
-            cursor.close()
-            con.commit()
+        cursor = db_connector.connect().cursor(named_tuple=True)
+        cursor.execute(change_password_query, (new_password, current_user.id))
+        cursor.close()
+        db_connector.connect().commit()
         flash('Пароль успешно обновлен', 'success')
         return redirect(url_for('users_list'))
     except Exception as e:
@@ -322,16 +315,38 @@ def delete_user(user_id):
     query = "DELETE FROM users WHERE id=%s"
 
     try:
-        with db_connector.connect() as con:
-            cursor = con.cursor(named_tuple=True)
-            cursor.execute(query, (user_id,))
-            cursor.close()
-            con.commit()
+        cursor = db_connector.connect().cursor(named_tuple=True)
+        cursor.execute(query, (user_id,))
+        cursor.close()
+        db_connector.connect().commit()
         flash('Пользователь успешно удален', 'success')
     except Exception as e:
         flash(f"Ошибка! {e}", 'warning')
     
     return redirect(url_for('users_list'))
+
+def validate_user_data(login, password, last_name, first_name):
+    errors = {}
+    if login is not None:
+        if login == "":
+            errors["login"] = "Поле не может быть пустым"
+        elif len(login) < 5:
+            errors["login"] = "Логин должен иметь длину не менее 5 символов"
+        elif not re.match("^[a-zA-Z0-9]+$", login):
+            errors["login"] = "Логин должен состоять только из латинских букв и цифр"
+
+    if password is not None:
+        password_validate_error = validate_password(password)
+        if password_validate_error != "":
+            errors["password"] = password_validate_error
+    
+    if last_name == "":
+        errors["last_name"] = "Поле не может быть пустым"
+    
+    if first_name == "":
+        errors["first_name"] = "Поле не может быть пустым"
+
+    return errors
 # python -m venv ve
 # . ve/bin/activate -- Linux
 # ve\Scripts\activate -- Windows

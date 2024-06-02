@@ -1,10 +1,10 @@
 import re
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from init import *
 
 from decorators import check_rights
-from mysqldb import DBConnector
+import mysql.connector
 from visit_logs.visit_logs import visit_logs
 
 
@@ -59,10 +59,12 @@ def log_visit():
         
 
     con = db_connector.connect()
-    with con.cursor(named_tuple=True) as cursor:
-        cursor.execute(query, tuple(parameters))
-        cursor.close()
-        con.commit()
+    try:
+        with con.cursor(named_tuple=True) as cursor:
+            cursor.execute(query, tuple(parameters))
+            con.commit()
+    except:
+        con.rollback()
 
 @app.route('/')
 def index():
@@ -83,12 +85,15 @@ def login():
     WHERE login=%s AND password_hash=SHA2(%s, 256)
     '''
     
+    try:
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
 
-    with db_connector.connect().cursor(named_tuple=True) as cursor:
+            cursor.execute(query, (login, password))
 
-        cursor.execute(query, (login, password))
-
-        user = cursor.fetchone()
+            user = cursor.fetchone()
+    except:
+        flash('Ошибка входа', category="danger")
+        return render_template("login.html")
 
     if user:
         login_user(User(user.id, user.login, user.role_name), remember=remember)
@@ -117,26 +122,34 @@ def get_users():
     LEFT JOIN roles ON users.role_id = roles.id 
     '''
 
-    with db_connector.connect().cursor(named_tuple=True) as cursor:
-
-        cursor.execute(query)
-        
-        users = cursor.fetchall()
-
-    return users
+    try:
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
+            cursor.execute(query)
+            roles = cursor.fetchall()
+        return roles
+    except mysql.connector.Error as e:
+        flash(f"Database error: {e}", 'warning')
+        return []
+    except Exception as e:
+        flash(f"An error occurred: {e}", 'warning')
+        return []
 
 def get_roles():
     query = '''
     SELECT id, name FROM roles 
     '''
 
-    with db_connector.connect().cursor(named_tuple=True) as cursor:
-
-        cursor.execute(query)
-        
-        roles = cursor.fetchall()
-
-    return roles
+    try:
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
+            cursor.execute(query)
+            roles = cursor.fetchall()
+        return roles
+    except mysql.connector.Error as e:
+        flash(f"Database error: {e}", 'warning')
+        return []
+    except Exception as e:
+        flash(f"An error occurred: {e}", 'warning')
+        return []
 
 @app.route("/create_user", methods=["GET", "POST"])
 @login_required
@@ -153,20 +166,7 @@ def create_user():
     first_name = request.form.get('first_name', "")
     middle_name = request.form.get('middle_name', "")
     role_id = request.form.get('role_id')
-
-
-    if login == "":
-        errors["login"] = "Поле не может быть пустым"
-    
-    password_validate_error = validate_password(password)
-    if password_validate_error != "":
-        errors["password"] = password_validate_error
-    
-    if last_name == "":
-        errors["last_name"] = "Поле не может быть пустым"
-    
-    if first_name == "":
-        errors["first_name"] = "Поле не может быть пустым"
+    errors = validate_user_data(login, password, last_name, first_name)
 
     if errors:
         return render_template("create_user.html", roles=get_roles(), errors=errors)
@@ -236,12 +236,18 @@ def get_user(user_id):
     WHERE users.id=%s
     '''
 
-    with db_connector.connect().cursor(named_tuple=True) as cursor:
-
-        cursor.execute(query, (user_id,))
-        
-        user = cursor.fetchone()
-    return user
+    
+    try:
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
+            cursor.execute(query, (user_id,))
+            user = cursor.fetchone()
+        return user
+    except mysql.connector.Error as e:
+        flash(f"Database error: {e}", 'warning')
+        return None
+    except Exception as e:
+        flash(f"An error occurred: {e}", 'warning')
+        return None
 
 @app.route('/users/<int:user_id>/edit_user', methods=["GET", "POST"])
 @login_required
@@ -258,11 +264,7 @@ def edit_user(user_id):
     middle_name = request.form.get('middle_name', "")
     role_id = request.form.get('role_id')
     
-    if last_name == "":
-        errors["last_name"] = "Поле не может быть пустым"
-    
-    if first_name == "":
-        errors["first_name"] = "Поле не может быть пустым"
+    errors = validate_user_data(login=None, password=None, last_name=last_name, first_name=first_name)
 
     if errors:
         return render_template("edit_user.html", user=user, roles=roles, errors=errors)
@@ -282,11 +284,12 @@ def edit_user(user_id):
     query = query.format(**placeholders)
 
     parameters = [last_name, first_name]
+    if role_id:
+        parameters.append(role_id)
+
     if middle_name:
         parameters.append(middle_name)
 
-    if role_id:
-        parameters.append(role_id)
     
     parameters.append(user_id)
 
@@ -300,6 +303,7 @@ def edit_user(user_id):
         return redirect(url_for('users_list'))
     except Exception as e:
         flash(f"Ошибка! {e}", 'warning')
+        db_connector.connect().rollback()
         return render_template("edit_user.html", user=user, roles=get_roles(), errors=errors)
     
 @app.route("/change_password", methods=["GET", "POST"])
@@ -328,6 +332,7 @@ def change_password():
                 flash("Ошибка! Введен неверный пароль!", 'warning')
                 return render_template("change_password.html", errors=errors)
     except Exception as e:
+        db_connector.connect().rollback()
         flash(f"Ошибка! {e}", 'warning')
         return render_template("change_password.html", errors=errors)
         
@@ -354,6 +359,7 @@ def change_password():
         flash('Пароль успешно обновлен', 'success')
         return redirect(url_for('users_list'))
     except Exception as e:
+        db_connector.connect().rollback()
         flash(f"Ошибка! {e}", 'warning')
         return render_template("change_password.html", errors=errors)
     
@@ -372,10 +378,33 @@ def delete_user(user_id):
             con.commit()
         flash('Пользователь успешно удален', 'success')
     except Exception as e:
+        db_connector.connect().rollback()
         flash(f"Ошибка! {e}", 'warning')
     
     return redirect(url_for('users_list'))
 
+def validate_user_data(login, password, last_name, first_name):
+    errors = {}
+    if login is not None:
+        if login == "":
+            errors["login"] = "Поле не может быть пустым"
+        elif len(login) < 5:
+            errors["login"] = "Логин должен иметь длину не менее 5 символов"
+        elif not re.match("^[a-zA-Z0-9]+$", login):
+            errors["login"] = "Логин должен состоять только из латинских букв и цифр"
+
+    if password is not None:
+        password_validate_error = validate_password(password)
+        if password_validate_error != "":
+            errors["password"] = password_validate_error
+    
+    if last_name == "":
+        errors["last_name"] = "Поле не может быть пустым"
+    
+    if first_name == "":
+        errors["first_name"] = "Поле не может быть пустым"
+
+    return errors
 # python -m venv ve
 # . ve/bin/activate -- Linux
 # ve\Scripts\activate -- Windows

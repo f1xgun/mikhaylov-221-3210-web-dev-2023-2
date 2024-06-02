@@ -1,6 +1,6 @@
 import csv
 from io import BytesIO, StringIO
-from flask import Blueprint, make_response, render_template, request, url_for
+from flask import Blueprint, flash, make_response, render_template, request, url_for
 from flask_login import current_user, login_required
 from init import db_connector
 from decorators import check_rights
@@ -69,10 +69,14 @@ def get_all_logs(is_admin=False, page=0, limit=10):
     if page:
         query += " OFFSET %s"
         parameters.append(page * limit)
-    with db_connector.connect().cursor(named_tuple=True) as cursor:
-        cursor.execute(query, tuple(parameters))
-        
-        visit_logs = cursor.fetchall()
+    try:
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
+            cursor.execute(query, tuple(parameters))
+            
+            visit_logs = cursor.fetchall()
+    except:
+        flash('Ошибка загрузки логов', category="danger")
+        return ([], False)
     records = []
     for log in visit_logs:
         name = ""
@@ -128,9 +132,14 @@ def get_pages_report(page=0, limit=10):
         query += " OFFSET %s"
         parameters.append(page * limit)
 
-    with db_connector.connect().cursor(named_tuple=True) as cursor:
-        cursor.execute(query, tuple(parameters))
-        visit_logs = cursor.fetchall()
+    try:
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
+            cursor.execute(query, tuple(parameters))
+            visit_logs = cursor.fetchall()
+    except:
+        flash('Ошибка загрузки логов по страницам', category='danger')
+        return [], False
+
 
     records = []
     for i in range(len(visit_logs)):
@@ -198,9 +207,13 @@ def get_users_report(page=0, limit=10):
         query += " OFFSET %s"
         parameters.append(page * limit)
 
-    with db_connector.connect().cursor(named_tuple=True) as cursor:
-        cursor.execute(query, tuple(parameters))
-        visit_logs = cursor.fetchall()
+    try:
+        with db_connector.connect().cursor(named_tuple=True) as cursor:
+            cursor.execute(query, tuple(parameters))
+            visit_logs = cursor.fetchall()
+    except:
+        flash('Ошибка загрузки логов по страницам', category='danger')
+        return [], False
 
     records = []
     for i in range(len(visit_logs)):
