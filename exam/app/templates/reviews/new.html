@@ -1,24 +1,11 @@
-{% macro own_review(review, course, current_user, grades) %}
-{% if current_user.is_authenticated %}
-{% if review and review.id %}
-<div class="d-flex flex-column align-items-center">
-    <h2 class="mb-3 text-center text-uppercase font-weight-bold">Ваш отзыв</h2>
-    <div class="col-md-6 p-3 border rounded mb-3">
-        <div class="d-flex">
-            <h4 class="text-uppercase">{{ review.user.first_name }}</h4>
-            <p class="ms-auto rating">{{ review.get_rating_str() }}</p>
-        </div>
-        <p class="text-muted">{{ review.created_at }}</p>
-        <p>{{ review.text }}</p>
-    </div>
-</div>
-{% else %}
-<div class="d-flex flex-column align-items-center">
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-column align-items-center mt-5">
     <h2 class="mb-3 text-center text-uppercase font-weight-bold">Добавьте отзыв</h2>
-    <form method="POST" action="{{ url_for('courses.create_review', course_id=course.id) }}"
+    <form method="POST" action="{{ url_for('books.create_review', book_id=book.id) }}"
           class="p-3 border rounded col-md-6">
         <input type="hidden" name="user_id" value="{{ current_user.id }}">
-        <input type="hidden" name="course_id" value="{{ course.id }}">
+        <input type="hidden" name="book_id" value="{{ book.id }}">
         <div class="mb-3 row">
             <div class="d-flex flex-column">
                 <div class="mb-3">
@@ -47,6 +34,4 @@
         </div>
     </form>
 </div>
-{% endif %}
-{% endif %}
-{% endmacro %}
+{% endblock %}

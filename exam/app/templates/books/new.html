@@ -1,0 +1,6 @@
+{% from "books/create_edit_book_macros.html" import book_form %}
+{% extends 'base.html' %}
+
+{% block content %}
+{{ book_form(book, genres, True) }}
+{% endblock %}

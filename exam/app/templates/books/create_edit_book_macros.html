@@ -1,0 +1,68 @@
+{% macro book_form(book, genres, is_new) %}
+<div class="container">
+    <h2 class="my-3 text-center text-uppercase font-weight-bold">
+        {% if not is_new %}Редактирование книги "{{ book.name }}"{% else %}Создание книги{% endif %}</h2>
+
+    <form method="POST"
+          action="{% if is_new %}{{ url_for('books.create') }}{% else %}{{ url_for('books.edit_book', book_id=book.id)}}{% endif %}"
+          enctype="multipart/form-data">
+        <div class="mb-3 row">
+            <div class="col-md-6 d-flex flex-column mx-auto">
+                <div class="mb-3">
+                    <label for="name">Название</label>
+                    <input class="form-control" type="text" name="name" id="name" value="{{ book.name or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="year">Год написания</label>
+                    <input class="form-control" type="number" name="year" id="year" value="{{ book.year or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="publisher">Издательство</label>
+                    <input class="form-control" type="text" name="publisher" id="publisher"
+                           value="{{ book.publisher or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="author">Автор</label>
+                    <input class="form-control" type="text" name="author" id="author" value="{{ book.author or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="pages_count">Объем (в страницах)</label>
+                    <input class="form-control" type="number" name="pages_count" id="pages_count"
+                           value="{{ book.pages_count or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="genres_id">Жанры</label>
+                    <select class="form-select" name="genres_id" id="genres_id" multiple>
+                        {% for genre in genres %}
+                        <option {% if genre in book.genres %}selected{% endif %}
+                                value="{{ genre.id }}">{{ genre.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3 d-flex flex-column flex-grow-1">
+                    <label for="short_description">Краткое описание</label>
+                    <textarea class="form-control flex-grow-1" name="short_desc" id="short_description" cols="30"
+                              rows="5">{{ book.short_desc or '' }}</textarea>
+                </div>
+            </div>
+            {% if is_new %}
+            <div class="col-md-6 d-flex flex-column">
+                <div class="mb-3">
+                    <label for="cover_img">Обложка книги</label>
+                    <input class="form-control" type="file" name="cover_img" id="cover_img">
+                </div>
+                <div class="mb-3 cover-preview p-3 rounded d-flex align-items-center justify-content-center">
+                    <img src="#" class="img-fluid d-none" alt="">
+                    <label for="cover_img" class="btn btn-dark">Выбрать изображение</label>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3 text-center">
+            <input type="submit" class="btn btn-dark" value="Сохранить">
+        </div>
+    </form>
+</div>
+{% endmacro %}

@@ -82,8 +82,10 @@ def show(course_id):
     course = db.get_or_404(Course, course_id)
     reviews = db.session.execute(
         db.select(Review).filter_by(course_id=course_id).order_by(desc(Review.created_at)).limit(5)).scalars().all()
-    user_review = db.session.execute(
-        db.select(Review).filter_by(course_id=course_id, user_id=current_user.id)).scalar_one_or_none()
+    user_review = None
+    if current_user.is_authenticated:
+        user_review = db.session.execute(
+            db.select(Review).filter_by(course_id=course_id, user_id=current_user.id)).scalar_one_or_none()
 
     return render_template('courses/show.html',
                            course=course,
@@ -109,8 +111,10 @@ def reviews(course_id):
     reviews = ReviewsFilter(course_id=course_id, type_sort_id=type_sort_id).perform()
     pagination = db.paginate(reviews)
     reviews = pagination.items
-    user_review = db.session.execute(
-        db.select(Review).filter_by(course_id=course_id, user_id=current_user.id)).scalar_one_or_none()
+    user_review = None
+    if current_user.is_authenticated:
+        user_review = db.session.execute(
+            db.select(Review).filter_by(course_id=course_id, user_id=current_user.id)).scalar_one_or_none()
     return render_template('reviews/index.html',
                            reviews=reviews,
                            course=course,
@@ -132,6 +136,20 @@ def create_review_params():
 @bp.route('/<int:course_id>/review/create', methods=["POST"])
 @login_required
 def create_review(course_id):
+    existed_review = db.session.execute(
+        db.select(Review).filter_by(course_id=course_id, user_id=current_user.id)).scalar_one_or_none()
+    if existed_review is not None:
+        flash("Вы уже оставляли отзыв для данного курса", 'danger')
+        course = db.get_or_404(Course, course_id)
+        reviews = db.session.execute(
+            db.select(Review).filter_by(course_id=course_id).order_by(desc(Review.created_at)).limit(5)).scalars().all()
+        return render_template('courses/show.html',
+                               course=course,
+                               reviews=reviews,
+                               user_review=existed_review,
+                               grades=REVIEW_GRADES,
+                               )
+
     review = Review(**create_review_params())
     try:
         db.session.add(review)

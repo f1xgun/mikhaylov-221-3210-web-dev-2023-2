@@ -1,0 +1,21 @@
+{% macro own_review(review, book, current_user, grades) %}
+{% if current_user.is_authenticated %}
+{% if review and review.id %}
+<div class="d-flex flex-column align-items-center">
+    <h2 class="mb-3 text-center text-uppercase font-weight-bold">Ваш отзыв</h2>
+    <div class="col-md-6 p-3 border rounded mb-3">
+        <div class="d-flex">
+            <h4 class="text-uppercase">{{ review.user.first_name }}</h4>
+            <p class="ms-auto rating">{{ review.get_rating_str() }}</p>
+        </div>
+        <p class="text-muted">{{ review.created_at }}</p>
+        <p>{{ review.text }}</p>
+    </div>
+</div>
+{% else %}
+<div class="d-flex flex-column align-items-center">
+    <a href="{{ url_for('books.create_review', book_id=book.id) }}" class="btn btn-lg btn-dark">Добавьте отзыв</a>
+</div>
+{% endif %}
+{% endif %}
+{% endmacro %}

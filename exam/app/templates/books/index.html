@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% from 'pagination.html' import render_pagination %}
+
+{% block content %}
+<div class="container">
+    <div class="my-5">
+
+        <h2 class="mb-3 text-center text-uppercase font-weight-bold">Список книг</h2>
+
+        <form class="mb-5 mt-3 row align-items-center">
+            <div class="col-md-6 my-3">
+                <input autocomplete="off" type="text" class="form-control" id="book-name" name="name"
+                       value="{{ request.args.get('name') or '' }}" placeholder="Название книги">
+            </div>
+
+            <div class="col-md-4 my-3">
+                <select class="form-select" multiple id="book-genres" name="genre_ids" title="Жанр книги">
+                    <option value="">Выберите жанры</option>
+                    {% for genre in genres %}
+                    <option value="{{ genre.id }}" {% if genre.id | string in request.args.getlist(
+                    'genre_ids') %}selected{% endif %}>{{ genre.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2 my-3">
+                <button type="submit" class="btn btn-dark w-100 mt-auto">Найти</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="books-list container-fluid mt-3 mb-3">
+        {% for book in books %}
+        <div class="row p-3 border rounded mb-3" data-url="{{ url_for('books.show', book_id=book.id) }}">
+            <div class="col-md-3 mb-3 mb-md-0 d-flex align-items-center justify-content-center">
+                <div class="book-logo"
+                     style="background-image: url({{ url_for('image', image_id=book.cover_image_id) }});">
+                </div>
+            </div>
+            <div class="col-md-6 align-items-center">
+                <div class="d-flex">
+                    <h4 class="text-uppercase">{{ book.name }} {{ book.year }}г.</h4>
+                </div>
+                <p>{{ book.short_desc | truncate(200) }}</p>
+                {% if book.genres %}
+                <div class="d-flex gap-2 align-items-center mb-3">
+                    {% for genre in book.genres %}
+                    <div class="border border-1 p-2 flex-wrap">{{ genre.name }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <p class="ms-auto rating">
+                    <span>★</span> <span>{{ "%.2f" | format(book.rating()) }} {{book.reviews | length}} отзывов</span>
+                </p>
+            </div>
+            <div class="col-md-3 d-flex align-items-center gap-2">
+                {% if current_user.is_authenticated and (current_user.is_admin() or current_user.is_moderator()) %}
+                <a type="submit" class="btn btn-info" href="{{ url_for('books.edit_book', book_id=book.id )}}">Редактировать</a>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.is_admin() %}
+                <a type="submit" class="btn btn-danger" data-bs-toggle="modal"
+                   data-bs-target="#delete_book_modal"
+                   data-delete-url="{{ url_for('books.delete_book', book_id=book.id) }}"
+                   data-name="{{ book.name }}">Удалить</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+
+    {% if books %}
+    <div class="mb-5">
+        {{ render_pagination(pagination, request.endpoint, search_params) }}
+    </div>
+    {% endif %}
+
+    {% if current_user.is_authenticated and current_user.is_admin() %}
+    <div class="text-center my-3">
+        <a class="btn btn-lg btn-dark" href="{{ url_for('books.new') }}">Создать книгу</a>
+    </div>
+    {% endif %}
+
+</div>
+
+<div
+        class="modal"
+        tabindex="-1"
+        id="delete_book_modal"
+        role="dialog"
+        aria-labelledby="basicModal"
+        aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удаление книги</h5>
+                <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-book-name"></p>
+            </div>
+            <div class="modal-footer">
+                <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Отмена
+                </button>
+                <form action="" method="post">
+                    <button type="submit" class="btn btn-danger">
+                        Удалить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+{% endblock %}
