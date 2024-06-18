@@ -220,7 +220,7 @@ def create_review(book_id):
 
 @bp.route('/<int:book_id>/review/<int:review_id>/delete', methods=["POST"])
 @login_required
-@check_rights(need_admin_role=True, need_moderator_role=True)
+@check_rights(need_moderator_role=True)
 def delete_review(book_id, review_id):
     existed_review = db.session.execute(
         db.select(Review).filter_by(id=review_id)).scalar_one_or_none()
