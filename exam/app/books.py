@@ -216,3 +216,25 @@ def create_review(book_id):
     flash(f'Отзыв был успешно добавлен!', 'success')
 
     return redirect(url_for('books.show', book_id=book_id))
+
+
+@bp.route('/<int:book_id>/review/<int:review_id>/delete', methods=["POST"])
+@login_required
+@check_rights(need_admin_role=True, need_moderator_role=True)
+def delete_review(book_id, review_id):
+    existed_review = db.session.execute(
+        db.select(Review).filter_by(id=review_id)).scalar_one_or_none()
+
+    if existed_review is None:
+        flash('Возникла ошибка при удалении отзыва, отзыв не найден.', 'danger')
+        return redirect(url_for('books.show', book_id=book_id))
+
+    try:
+        db.session.delete(existed_review)
+        db.session.commit()
+        flash("Отзыв успешно удален", 'success')
+    except IntegrityError as err:
+        flash(f"Возникла ошибка при удалении отзыва. ({err})", 'danger')
+        db.session.rollback()
+
+    return redirect(url_for('books.show', book_id=book_id))

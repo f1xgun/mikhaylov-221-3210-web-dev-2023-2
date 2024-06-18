@@ -1,4 +1,4 @@
-{% macro show_reviews(reviews) %}
+{% macro show_reviews(reviews, book, current_user) %}
 <div class="container-fluid row mt-3 mb-3 gap-3">
     {% for review in reviews %}
     <div class="p-3 border rounded mb-3 col-md-4 align-items-center">
@@ -8,6 +8,12 @@
         </div>
         <p class="text-muted">{{ review.created_at }}</p>
         <p>{{ review.text }}</p>
+        {% if current_user.is_authenticated and (current_user.is_admin() or current_user.is_moderator()) %}
+        <a type="submit" class="btn btn-danger" data-bs-toggle="modal"
+           data-bs-target="#delete_review_modal"
+           data-delete-url="{{ url_for('books.delete_review', book_id=book.id, review_id=review.id) }}"
+           data-name="{{ review.user.full_name }}">Удалить</a>
+        {% endif %}
     </div>
     {% endfor %}
 </div>

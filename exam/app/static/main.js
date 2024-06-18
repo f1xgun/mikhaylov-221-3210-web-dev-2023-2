@@ -23,12 +23,23 @@ function openLink(event) {
     }
 }
 
-function fillDeleteModalInfo(event) {
+function fillDeleteBookModalInfo(event) {
     let deleteUrl = event.relatedTarget.dataset.deleteUrl;
     let bookName = event.relatedTarget.dataset.name;
 
     let title = event.target.querySelector(".modal-book-name");
     title.innerHTML = "Вы действительно хотите удалить книгу " + bookName;
+
+    let modalForm = event.target.querySelector("form");
+    modalForm.action = deleteUrl;
+}
+
+function fillDeleteBookReviewModalInfo(event) {
+    let deleteUrl = event.relatedTarget.dataset.deleteUrl;
+    let username = event.relatedTarget.dataset.name;
+
+    let title = event.target.querySelector(".modal-review-user-name");
+    title.innerHTML = "Вы действительно хотите удалить отзыв от " + username;
 
     let modalForm = event.target.querySelector("form");
     modalForm.action = deleteUrl;
@@ -44,6 +55,9 @@ window.onload = function() {
         book_elm.onclick = openLink;
     }
 
-    let deleteModalWindow = document.getElementById("delete_book_modal");
-    deleteModalWindow.addEventListener("show.bs.modal", fillDeleteModalInfo);
+    let deleteBookReviewModalInfo = document.getElementById("delete_review_modal");
+    deleteBookReviewModalInfo.addEventListener("show.bs.modal", fillDeleteBookReviewModalInfo);
+
+    let deleteBookModalWindow = document.getElementById("delete_book_modal");
+    deleteBookModalWindow.addEventListener("show.bs.modal", fillDeleteBookModalInfo);
 }

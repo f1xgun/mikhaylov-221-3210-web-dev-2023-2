@@ -15,12 +15,12 @@
 <div class="container mt-5">
     <section class="program mb-5">
         {% if book.genres %}
-            <h2 class="mb-3 text-center text-uppercase font-weight-bold">Жанры</h2>
-            <div class="d-flex gap-2 align-items-center mb-3 justify-content-center">
-                {% for genre in book.genres %}
-                <div class="border border-1 p-2 flex-wrap">{{ genre.name }}</div>
-                {% endfor %}
-            </div>
+        <h2 class="mb-3 text-center text-uppercase font-weight-bold">Жанры</h2>
+        <div class="d-flex gap-2 align-items-center mb-3 justify-content-center">
+            {% for genre in book.genres %}
+            <div class="border border-1 p-2 flex-wrap">{{ genre.name }}</div>
+            {% endfor %}
+        </div>
         {% endif %}
 
         <div class="container">
@@ -36,7 +36,7 @@
             <p class="ms-auto rating">
                 <span>★</span> <span>{{ "%.2f" | format(book.rating()) }} {{book.reviews | length}} отзывов</span>
             </p>
-            {{ show_reviews(reviews) }}
+            {{ show_reviews(reviews, book, current_user) }}
         </div>
         {% endif %}
 
