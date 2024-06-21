@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import desc
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 
 from check_rights_decorator import check_rights
 from models import db, User, Review, REVIEW_GRADES, Genre, Book
@@ -70,6 +70,15 @@ def create():
         db.session.add(book)
         db.session.commit()
     except IntegrityError as err:
+        flash(f'Возникла ошибка при записи данных в БД. Проверьте корректность введённых данных. ({err})', 'danger')
+        db.session.rollback()
+        genres = db.session.execute(db.select(Genre)).scalars()
+        users = db.session.execute(db.select(User)).scalars()
+        return render_template('books/new.html',
+                               genres=genres,
+                               users=users,
+                               book=book)
+    except DataError as err:
         flash(f'Возникла ошибка при записи данных в БД. Проверьте корректность введённых данных. ({err})', 'danger')
         db.session.rollback()
         genres = db.session.execute(db.select(Genre)).scalars()
